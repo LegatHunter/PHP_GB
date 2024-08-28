@@ -9,5 +9,4 @@ return array(
     '73a76277cdd754516bf94aa9c0aa6bb3' => $baseDir . '/src/main.function.php',
     '2c30778c83e7cf1ab5d05f6fb053a212' => $baseDir . '/src/template.function.php',
     '4497162affd5dbda9202a35ac3a5f40d' => $baseDir . '/src/file.function.php',
-    '180746bbc1e8c796382f0fdeb325f75f' => $baseDir . '/src/data1.function.php',
 );

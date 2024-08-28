@@ -1,5 +1,6 @@
 <?php
 
+
 // function readAllFunction(string $address) : string {
 function readAllFunction(array $config): string
 {
@@ -27,13 +28,17 @@ function addFunction(array $config): string
     $address = $config['storage']['address'];
 
     $name = readline("Введите имя: ");
+
     if (!validateName($name)) {
-        return handleError("Такого имени не существует");
+        return handleError("Имя должно содержать не менее 3 и не более 20 символов.");
     }
+
     $date = readline("Введите дату рождения в формате ДД-ММ-ГГГГ: ");
+
     if (!validateDate($date)) {
-        return handleError("Не правильно указана дата");
+        return handleError("Неверный формат даты рождения");
     }
+
     $data = $name . ", " . $date . "\r\n";
 
     $fileHandler = fopen($address, 'a');
@@ -121,4 +126,32 @@ function readProfile(array $config): string
     $info .= "Фамилия: " . $contentArray['lastname'] . "\r\n";
 
     return $info;
+}
+
+function readUserDataFromFile($address)
+{
+    $userData = [];
+
+    if (file_exists($address) && is_readable($address)) {
+        $file = fopen($address, 'r');
+
+        while (!feof($file)) {
+            $line = fgets($file);
+            if (!empty($line)) {
+                $userData[] = explode(', ', $line);
+            }
+        }
+
+        fclose($file);
+    }
+    return $userData;
+}
+function writeUserDataToFile($address, $userData)
+{
+    $fileHandler = fopen($address, 'w');
+    foreach ($userData as $userDataItem) {
+        $line = implode(', ', $userDataItem);
+        fwrite($fileHandler, $line);
+    }
+    fclose($fileHandler);
 }

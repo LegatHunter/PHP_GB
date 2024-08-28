@@ -3,14 +3,16 @@
     "description": "Приложение работы с файловым хранилищем",
     "type": "project",
     "require": {
-        "php": "^8.2"
+        "php": "^8.0"
     },
     "autoload": {
         "files": [
             "src/main.function.php",
             "src/template.function.php",
             "src/file.function.php",
-            "src/data1.function.php"
+            "src/birthday.function.php",
+            "src/data.function.php",
+            "src/users.function.php"
         ]
     }
 }
