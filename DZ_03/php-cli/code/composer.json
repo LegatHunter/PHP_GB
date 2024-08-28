@@ -10,7 +10,7 @@
             "src/main.function.php",
             "src/template.function.php",
             "src/file.function.php",
-            "src/data1.function.php"
+            "src/dataNew.function.php"
         ]
     }
 }
