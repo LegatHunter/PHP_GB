@@ -121,4 +121,64 @@ function readProfile(array $config): string
     $info .= "Фамилия: " . $contentArray['lastname'] . "\r\n";
 
     return $info;
+};
+
+function searchProfile(array $config): string
+{
+    $address = $config['storage']['address'];
+    $birthdayProfiles = [];
+
+    if (file_exists($address)) {
+        $handle = fopen($address, 'r');
+
+        if ($handle) {
+            while (($line = fgets($handle)) !== false) {
+                $profile = explode(', ', $line);
+                $birthday = DateTime::createFromFormat('d-m-Y', trim($profile[1]));
+
+                if ($birthday !== false) {
+                    $currentDate = new DateTime();
+
+                    if ($birthday->format('m-d') === $currentDate->format('m-d')) {
+                        $birthdayProfiles[] = $profile[0];
+                    }
+                }
+            }
+
+            fclose($handle);
+        }
+    }
+
+    return implode("\n", $birthdayProfiles);
 }
+
+function deleteProfile(array $config): string
+{
+    $address = $config['storage']['address'];
+    $nameToDelete = readline("Введите имя для удаления: ");
+
+    if (file_exists($address)) {
+        $lines = file($address, FILE_IGNORE_NEW_LINES);
+        $found = false;
+
+        foreach ($lines as $key => $line) {
+            $profile = explode(', ', $line);
+
+            if ($profile[0] === $nameToDelete) {
+                unset($lines[$key]);
+                $found = true;
+                break;
+            }
+        }
+
+        if ($found) {
+            file_put_contents($address, implode("\n", $lines));
+            return "Профиль $nameToDelete удален.";
+        } else {
+            return "Профиль $nameToDelete не найден.";
+        }
+    } else {
+        return "Файл не существует.";
+    }
+}
+

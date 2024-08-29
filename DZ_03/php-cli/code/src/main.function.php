@@ -1,6 +1,6 @@
 <?php
 
-function main(string $configFileAddress) : string {
+function main(string $configFileAddress) : array|string {
     $config = readConfig($configFileAddress);
 
     if(!$config){
@@ -21,7 +21,6 @@ function main(string $configFileAddress) : string {
 
 function parseCommand() : string {
     $functionName = 'helpFunction';
-    
     if(isset($_SERVER['argv'][1])) {
         $functionName = match($_SERVER['argv'][1]) {
             'read-all' => 'readAllFunction',
@@ -30,6 +29,8 @@ function parseCommand() : string {
             'read-profiles' => 'readProfilesDirectory',
             'read-profile' => 'readProfile',
             'help' => 'helpFunction',
+            'search' => 'searchProfile',
+            'delete' => 'deleteProfile',
             default => 'helpFunction'
         };
     }
