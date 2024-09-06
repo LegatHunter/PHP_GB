@@ -1,5 +1,10 @@
 <?php
-abstract class Product
+
+interface IProduct
+{
+  public function getPrice(): float;
+}
+abstract class Product implements IProduct
 {
   protected string $name;
   protected float $price;
@@ -9,7 +14,10 @@ abstract class Product
     $this->name = $name;
     $this->price = $price;
   }
-  abstract function getFinalPrice(): float;
+  public function getPrice(): float
+  {
+    return $this->price;
+  }
 }
 
 class RealProduct extends Product
@@ -31,9 +39,15 @@ class RealProduct extends Product
 
 class DigitalProduct extends RealProduct
 {
+  public function __construct(string $name, float $price, int $count, string $url)
+  {
+    parent::__construct($name, $price, $count);
+    $this->url = $url;
+  }
+  protected string $url;
   function getFinalPrice(): float
   {
-    return $this->count * $this->price * 0.5;
+    return parent::getFinalPrice() * 0.5;
   }
 }
 
@@ -50,3 +64,6 @@ class WeightProduct extends Product
     return $this->weight * $this->price;
   }
 }
+
+$apple = new WeightProduct('Яблоко', 140, 2.5);
+echo $apple->getFinalPrice();
