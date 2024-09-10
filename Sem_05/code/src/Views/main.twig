@@ -1,14 +1,16 @@
-<!DOCTYPE html>
-<html>
-    <head>
-        <title>{{ title }}</title>
-    </head>
-    <body>
-    <nav>
-        <a href="/">Главная</a>
-        <a href="/user">Пользователи</a>
-        <a href="/about">О нас</a>
-    </nav>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ title }}</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    {% include 'header.twig' %}
+    <div class="main">
+      {% include 'nav.twig' %}
+      <div class="content">
         {% include content_template_name %}
-    </body>
-</html>
+      </div>
+    </div>
+    {% include 'footer.twig' %}
+</body>
