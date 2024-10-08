@@ -2,28 +2,39 @@
 
 namespace Geekbrains\Application1\Domain\Controllers;
 
+use Geekbrains\Application1\Application\Application;
 use Geekbrains\Application1\Application\Render;
+use Geekbrains\Application1\Application\Auth;
 use Geekbrains\Application1\Domain\Models\User;
 
-class UserController
+class UserController extends AbstractController
 {
+    protected array $actionsPermissions = [
+        'actionHash' => ['admin', 'some'],
+        'actionIndex' => ['admin', 'some'],
+        'actionLogout' => ['admin', 'some'],
+        'actionSave' => ['admin'],
+        'actionEdit' => ['admin'],
+        'actionShow' => ['admin'],        
+        'actionDellete' => ['admin']
+    ];
 
     public function actionIndex(): string
     {
         $users = User::getAllUsersFromStorage();
-        $render = new Render();
 
+        $render = new Render();
         if (!$users) {
             return $render->renderPage(
-                'user-empty.tpl',
+                'users/user-info.twig',
                 [
                     'title' => 'Список пользователей в хранилище',
                     'message' => "Список пуст или не найден"
                 ]
             );
         } else {
-            return $render->renderPage(
-                'user-index.tpl',
+            return $render->renderPageWithForm(
+                'pages/user-index.twig',
                 [
                     'title' => 'Список пользователей в хранилище',
                     'users' => $users
@@ -40,12 +51,11 @@ class UserController
             $user->saveToStorage();
 
             $render = new Render();
-
-            return $render->renderPage(
-                'user-created.tpl',
+            return $render->renderPageWithForm(
+                'users/user-info.twig',
                 [
                     'title' => 'Пользователь создан',
-                    'message' => "Создан пользователь " . $user->getUserName() . " " . $user->getUserLastName()
+                    'message' => "Пользователь: " . $user->getUserName() . " " . $user->getUserLastName() . " - добавлен в хранилище"
                 ]
             );
         } else {
@@ -53,49 +63,155 @@ class UserController
         }
     }
 
+    public function actionEdit(): string
+    {
+        $render = new Render();
+        $action = '/user/save';
+        if (isset($_GET['user_id'])) {
+            $userId = $_GET['user_id'];
+            $action = '/user/update';
+            $userData = User::getUserFromStorageById($userId);
+        }
+        return $render->renderPageWithForm(
+            'users/user-form.twig',
+            [
+                'title' => 'Форма создания/редактирования пользователя',
+                // 'user_data' => $userData ?? [],
+                'action' => $action,
+                'id_user' => $userData?->getUserId() ?? '',            
+                'user_name' => $userData?->getUserName() ?? '',
+                'user_lastname' => $userData?->getUserLastName() ?? '',
+                'user_birthday' => $userData?->getUserBirthday() ?? '',
+                'user_login' => $userData?->getUserLogin() ?? ''
+            ]
+        );
+    }
+
+    public function actionAuth(): string
+    {
+        $render = new Render();
+
+        return $render->renderPageWithForm(
+            'users/user-auth.twig',
+            [
+                'title' => 'Форма логина'
+            ]
+        );
+    }
+
+    public function actionHash(): string
+    {
+        return Auth::getPasswordHash($_GET['pass_string']);
+    }
+
+    public function actionLogin(): string
+    {
+        $result = false;
+
+        if (isset($_POST['login']) && isset($_POST['password'])) {
+            $result = Application::$auth->proceedAuth($_POST['login'], $_POST['password']);
+        }
+
+        if (!$result) {
+            if ($_POST['login'] == "") {
+                $messege_err = "Ошибка. Заполните поле логин!";
+            } elseif ($_POST['password'] == "") {
+                $messege_err = "Ошибка. Заполните поле пароль!";
+            } else {
+                $messege_err = "Ошибка. Введены некорректные логин-пароль!";
+            }
+            $render = new Render();
+            return $render->renderPageWithForm(
+                'users/user-auth.twig',
+                [
+                    'title' => 'Форма логина',
+                    'auth_success' => false,
+                    'auth_error' => $messege_err
+                ]
+            );
+        } else {
+            header('Location: /');
+            return "";
+        }
+    }
+
+    public function actionLogout(): void
+    {
+        session_destroy();
+        unset($_SESSION['user_name']);
+        header("Location: /");
+        die();
+    }
+
+    public function actionShow(): string
+    {
+        $id = $_GET['user_id'];       
+        if (User::exists($id)) {
+            $user = User::getUserFromStorageById($id);
+            $render = new Render();
+            return $render->renderPageWithForm(
+                'users/user-info.twig',
+                [
+                    'title' => 'Информация о пользователе',
+                    'message' => 'Информация о выбранном пользователе: ' . $user
+                ]
+            );            
+        } else {
+            throw new \Exception("Пользователь не существует");
+        }        
+    }
+
     public function actionUpdate(): string
     {
-        if (isset($_GET['id']) && User::exists($_GET['id'])) {
-            $user = new User();
-            $user->setUserId($_GET['id']);
+        $id = $_POST['user_id'];
+        echo "id = ", $id;
+        if (User::exists($id)) {
+            $user = User::getUserFromStorageById($id);
+            $user->setUserId($id);
+
             $arrayData = [];
-            if (isset($_GET['name'])) {
-                $arrayData['user_name'] = $_GET['name'];
+            if (isset($_POST['name']))
+                $arrayData['user_name'] = $_POST['name'];
+
+            if (isset($_POST['lastname'])) {
+                $arrayData['user_lastname'] = $_POST['lastname'];
             }
-            if (isset($_GET['lastname'])) {
-                $arrayData['user_lastname'] = $_GET['lastname'];
+
+            if (isset($_POST['login'])) {
+                $arrayData['login'] = $_POST['login'];
             }
-            if (!empty($arrayData)) {
-                $user->updateUser($arrayData);
-            } else {
-                throw new \Exception("Нет данных для обновления");
-            }
+            $user->updateUser($arrayData);
         } else {
             throw new \Exception("Пользователь не существует");
         }
+
         $render = new Render();
-        return $render->renderPage(
-            'user-updated.tpl',
+        return $render->renderPageWithForm(
+            'users/user-info.twig',
             [
                 'title' => 'Пользователь обновлен',
-                'message' => "Обновлен пользователь с ID " . $user->getUserId()
+                'message' => "Обновлен пользователь с id = " . $user->getUserId()
             ]
         );
     }
 
     public function actionDelete(): string
     {
-        if (isset($_GET['id']) && User::exists($_GET['id'])) {
-            User::deleteFromStorage($_GET['id']);
+        $id = $_GET['user_id'];
+        if (User::exists($id)) {
+            $user = User::getUserFromStorageById($id);
+            User::deleteFromStorage($id);
+
             $render = new Render();
-            return $render->renderPage(
-                'user-removed.tpl',
-                ['title' => 'Пользователь удалён']
+            return $render->renderPageWithForm(
+                'users/user-info.twig',
+                [
+                    'title' => 'Удаление пользователя',
+                    'message' => "Пользователь: " .  $user . " - удален из хранилища"
+                ]
             );
         } else {
             throw new \Exception("Пользователь не существует");
         }
     }
-
-
 }
